@@ -4,7 +4,7 @@
 
 ## 發佈到 GitHub Pages
 1. 在 GitHub 建立新 repository（建議 Private；公開 repo 任何人都能看到網頁內容）。
-2. 把本資料夾的 4 個檔案（index.html、manifest.webmanifest、icon.svg、icon.png）上傳到 repository 根目錄。
+2. 把本資料夾的所有檔案上傳到 repository 根目錄：index.html、manifest.webmanifest、icon.svg、icon.png，以及 pages 資料夾（37 張索引掃描圖，校正時用來顯示原圖）。
 3. Settings → Pages → Source 選 Deploy from a branch，Branch 選 main、資料夾選 / (root)，儲存。
 4. 數分鐘後得到網址：https://你的帳號.github.io/repository名稱/
 5. 手機或 iPad 用 Safari 打開，分享 → 加入主畫面。
