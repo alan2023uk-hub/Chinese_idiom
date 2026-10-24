@@ -135,7 +135,8 @@ async function showBook(){const tk=++btk;const m=MAP.find(x=>x[0]===bpg);$("bt")
  let r=null;try{r=await idbGet(bpg)}catch(e){}
  if(tk!==btk)return;if(bu){URL.revokeObjectURL(bu);bu=null}
  if(r){bu=URL.createObjectURL(new Blob([r.b],{type:r.t}));im.src=bu}
- else{im.removeAttribute("src");$("bt").textContent+=" · 此頁尚未匯入"}}
+ else{try{const x=await fetch("b/"+bpg+".jpg");if(tk!==btk)return;if(x.ok){const bl=await x.blob();if(tk!==btk)return;bu=URL.createObjectURL(bl);im.src=bu;return}}catch(e){}
+  if(tk!==btk)return;im.removeAttribute("src");$("bt").textContent+=" · 找不到此頁圖片（本機未匯入，網站 b/ 也沒有）"}}
 function placeHL(){const o=document.querySelector("#bi .hl");if(o)o.remove();const p=BPOS&&bcode&&BPOS[bcode];if(!p||p[0]!==bpg)return;const h=document.createElement("div");h.className="hl";h.style.left=p[1]*100+"%";h.style.top=p[2]*100+"%";h.style.width=p[3]*100+"%";h.style.height=p[4]*100+"%";$("bi").appendChild(h);$("bw").scrollTop=Math.max(0,$("bm").clientHeight*p[2]-80)}
 $("pre").onclick=()=>openBook(1,0);
 $("bp").onclick=()=>{if(bpg>108||(bpg>1&&bpg<=10)){bpg--;bcode=0;showBook()}};
