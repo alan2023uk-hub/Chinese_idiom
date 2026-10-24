@@ -29,10 +29,10 @@ button{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--line)
 </style></head><body><main>
 <h1>成語索引查找</h1>
 <input id="q" type="text" placeholder="首字、成語前幾字、編碼，或範圍如 1-20,30-100" autocomplete="off">
-<div class="bar"><label><input id="low" type="checkbox"> 只看低信心未校正</label><label><input id="img" type="checkbox" checked> 顯示原圖</label><span id="n"></span><button id="s2t">簡轉繁（未校正行）</button></div>
+<div class="bar"><button class="ob" id="pre" style="margin:0 8px 0 0">📖 前言／版權</button><label><input id="low" type="checkbox"> 只看低信心未校正</label><label><input id="img" type="checkbox" checked> 顯示原圖</label><span id="n"></span><button id="s2t">簡轉繁（未校正行）</button></div>
 <div id="out"></div><button id="more" hidden>顯示更多</button>
 <div class="bar" style="margin-top:18px"><button id="exp">匯出 CSV</button><button id="imp">匯入 CSV</button><button id="rst">重設為原始</button><input id="file" type="file" accept=".csv,text/csv" hidden></div>
-<details class="m" style="margin-top:14px"><summary>上傳原文頁圖片（只需做一次）</summary><div class="ed"><p style="margin:0 0 8px">先在「GitHub 同步設定」填好帳號與 Token。解壓「原文頁圖片_b.zip」後，按下面選取全部 515 張 jpg，會逐張上傳到 repo 的 b/ 資料夾（已存在的自動略過，中斷可重按續傳）。</p><input id="bf" type="file" accept="image/jpeg" multiple><div id="bmsg" style="margin-top:8px"></div></div></details>
+<details class="m" style="margin-top:14px"><summary>匯入原文頁圖片到本機（只需做一次）</summary><div class="ed"><p style="margin:0 0 8px">解壓「原文頁圖片_b.zip」後，在此選取全部 515 張 jpg。圖片只存在這部裝置的瀏覽器內，不會上傳到 GitHub，每部裝置各自匯入一次。建議先用「加入主畫面」開啟本系統再匯入。</p><input id="bf" type="file" accept="image/jpeg" multiple><div id="bmsg" style="margin-top:8px"></div></div></details>
 <details class="m" style="margin-top:14px"><summary>GitHub 同步設定</summary><div class="ed">
 <input type="text" id="g_o" placeholder="GitHub 帳號"><input type="text" id="g_r" placeholder="repository 名稱"><input type="text" id="g_b" placeholder="分支（預設 main）"><input type="text" id="g_t" placeholder="Personal Access Token（只授權此 repo 的 Contents 讀寫）" autocomplete="off">
 <div><button id="g_s">儲存設定並同步</button> <button id="g_u">立即上傳</button> <button id="g_d">立即下載</button></div></div></details>
@@ -126,19 +126,27 @@ render();
 let BPOS=null;fetch("bpos.json").then(r=>r.ok?r.json():null).then(j=>{BPOS=j}).catch(()=>{});
 let bpg=0,bcode=0;
 function openBook(pg,code){bpg=pg;bcode=code||0;$("bv").style.display="flex";showBook()}
-function showBook(){const m=MAP.find(x=>x[0]===bpg);$("bt").textContent="第 "+bpg+" 頁"+(m?" · 編碼 "+m[1]+"–"+m[2]:"");const im=$("bm");im.onload=placeHL;im.src="b/"+bpg+".jpg";$("bw").scrollTop=0}
+let bu=null,btk=0;
+async function showBook(){const tk=++btk;const m=MAP.find(x=>x[0]===bpg);$("bt").textContent=bpg<108?"前置頁 "+bpg+"/10":"第 "+bpg+" 頁"+(m?" · 編碼 "+m[1]+"–"+m[2]:"");const im=$("bm");im.onload=placeHL;$("bw").scrollTop=0;
+ let r=null;try{r=await idbGet(bpg)}catch(e){}
+ if(tk!==btk)return;if(bu){URL.revokeObjectURL(bu);bu=null}
+ if(r){bu=URL.createObjectURL(new Blob([r.b],{type:r.t}));im.src=bu}
+ else{im.removeAttribute("src");$("bt").textContent+=" · 此頁尚未匯入"}}
 function placeHL(){const o=document.querySelector("#bi .hl");if(o)o.remove();const p=BPOS&&bcode&&BPOS[bcode];if(!p||p[0]!==bpg)return;const h=document.createElement("div");h.className="hl";h.style.left=p[1]*100+"%";h.style.top=p[2]*100+"%";h.style.width=p[3]*100+"%";h.style.height=p[4]*100+"%";$("bi").appendChild(h);$("bw").scrollTop=Math.max(0,$("bm").clientHeight*p[2]-80)}
-$("bp").onclick=()=>{if(bpg>108){bpg--;bcode=0;showBook()}};
-$("bn").onclick=()=>{if(bpg<622){bpg++;bcode=0;showBook()}};
+$("pre").onclick=()=>openBook(1,0);
+$("bp").onclick=()=>{if(bpg>108||(bpg>1&&bpg<=10)){bpg--;bcode=0;showBook()}};
+$("bn").onclick=()=>{if((bpg<622&&bpg>=108)||bpg<10){bpg++;bcode=0;showBook()}};
 $("bx").onclick=()=>{$("bv").style.display="none"};
 document.addEventListener("keydown",e=>{if($("bv").style.display!=="flex")return;if(e.key==="Escape")$("bx").click();if(e.key==="ArrowLeft")$("bp").click();if(e.key==="ArrowRight")$("bn").click()});
 
-const b64f=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result.split(",")[1]);r.onerror=no;r.readAsDataURL(f)});
-$("bf").onchange=async e=>{const fs=[...e.target.files].filter(f=>/^\d+\.jpe?g$/i.test(f.name)).sort((a,b)=>parseInt(a.name)-parseInt(b.name));const m=t=>{$("bmsg").textContent=t};
- if(!cfg.o||!cfg.r||!cfg.t){m("請先填好 GitHub 設定。");return}
- let up=0,sk=0,bad=0;for(let i=0;i<fs.length;i++){const f=fs[i],u="https://api.github.com/repos/"+cfg.o+"/"+cfg.r+"/contents/b/"+f.name;m("處理中 "+(i+1)+"/"+fs.length+"（已上傳 "+up+"、略過 "+sk+"、失敗 "+bad+"）");
-  try{const g=await fetch(u+ref(),{headers:hd(),cache:"no-store"});if(g.ok){sk++;continue}
-   let ok=false;for(let t=0;t<3&&!ok;t++){const x=await fetch(u,{method:"PUT",headers:hd(),body:JSON.stringify({message:"add page "+f.name,branch:cfg.b||"main",content:await b64f(f)})});if(x.ok||x.status===422)ok=true;else await new Promise(r=>setTimeout(r,1500))}
-   ok?up++:bad++}catch(err){bad++}}
- m("完成：上傳 "+up+"、略過 "+sk+"、失敗 "+bad+(bad?"。請再按一次選取以續傳。":"。現在可點「📖 開啟原文」。"))};
+const IDB=()=>new Promise((ok,no)=>{const r=indexedDB.open("bookpg",1);r.onupgradeneeded=()=>r.result.createObjectStore("p");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+async function idbPut(k,v){const d=await IDB();return new Promise((ok,no)=>{const t=d.transaction("p","readwrite");t.objectStore("p").put(v,k);t.oncomplete=ok;t.onerror=()=>no(t.error)})}
+async function idbGet(k){const d=await IDB();return new Promise((ok,no)=>{const q=d.transaction("p").objectStore("p").get(k);q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)})}
+async function idbCount(){const d=await IDB();return new Promise(ok=>{const q=d.transaction("p").objectStore("p").count();q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(0)})}
+const bm=t=>{$("bmsg").textContent=t};
+idbCount().then(n=>{if(n)bm("本機已有 "+n+" 頁原文圖片。")}).catch(()=>{});
+$("bf").onchange=async e=>{const fs=[...e.target.files].filter(f=>/^\d+\.jpe?g$/i.test(f.name));let ok=0,bad=0;
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(x){}
+ for(let i=0;i<fs.length;i++){bm("匯入中 "+(i+1)+"/"+fs.length+"（失敗 "+bad+"）");try{await idbPut(parseInt(fs[i].name),{t:fs[i].type||"image/jpeg",b:await fs[i].arrayBuffer()});ok++}catch(err){bad++}}
+ bm("完成：匯入 "+ok+" 頁，失敗 "+bad+"。目前本機共 "+await idbCount()+" 頁。")};
 </script></body></html>
