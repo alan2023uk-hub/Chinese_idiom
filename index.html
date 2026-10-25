@@ -72,9 +72,9 @@ function render(){const q=norm($("q").value),low=$("low").checked;let L;const ra
   d.querySelector(".t").textContent=r[1];
   d.querySelector(".m").textContent=(r[2]?"部首索引 "+r[2]+" · ":"")+"全本 PDF 第 "+pdfPage(r[0])+" 頁"+(r[4]?" · 已校正":"")+(w?" · ⚠ 低信心":"");
   if(w)d.querySelector(".m").classList.add("w");
-  if($("img").checked){const cr=crop(r[0]);if(cr)d.appendChild(cr)}
-  {const o=document.createElement("button");o.textContent="📖 開啟原文";o.className="ob";o.onclick=ev=>{ev.stopPropagation();openBook(+pdfPage(r[0]),r[0])};d.appendChild(o)}
-  d.onclick=ev=>{if(ev.target.closest(".ed"))return;open=open===r[0]?-1:r[0];render()};
+  const ob=ev=>{ev.stopPropagation();openBook(+pdfPage(r[0]),r[0])};d.querySelector(".m").onclick=ob;d.querySelector(".m").style.cursor="pointer";
+  if($("img").checked){const cr=crop(r[0]);if(cr){cr.onclick=ob;cr.style.cursor="pointer";d.appendChild(cr)}}
+  d.querySelector(".top").onclick=()=>{open=open===r[0]?-1:r[0];render()};d.querySelector(".top").style.cursor="pointer";
   if(open===r[0]&&r[2]){const e=document.createElement("div");e.className="ed";
    e.innerHTML='<input type="text" enterkeyhint="done">';
    const inp=e.querySelector("input");inp.value=r[1];let done=false;
