@@ -81,11 +81,11 @@ function render(){updSel();const q=norm($("q").value),low=$("low").checked;let L
   if(w)d.querySelector(".m").classList.add("w");
   const ob=ev=>{ev.stopPropagation();openBook(+pdfPage(r[0]),r[0])};d.querySelector(".m").onclick=ob;d.querySelector(".m").style.cursor="pointer";
   if($("img").checked){const cr=crop(r[0]);if(cr){cr.onclick=ob;cr.style.cursor="pointer";d.appendChild(cr)}}
-  d.querySelector(".top").onclick=()=>{if(BATCH){if(r[4]||!r[2])return;if(SEL.has(r[0]))SEL.delete(r[0]);else SEL.add(r[0]);selStyle(d,r);updBar();return}open=open===r[0]?-1:r[0];render()};if(BATCH)selStyle(d,r);d.querySelector(".top").style.cursor="pointer";if(RADF&&(r[0]<RADF[0]||r[0]>RADF[1])){d.style.opacity=".5";d.style.borderStyle="dashed"}
+  d.querySelector(".top").onclick=()=>{if(BATCH){if(r[4]||!r[2])return;if(SEL.has(r[0]))SEL.delete(r[0]);else SEL.add(r[0]);selStyle(d,r);updBar();return}open=open===r[0]?-1:r[0];render();const ii=document.querySelector(".ed input");if(ii){ii.focus();const n=ii.value.length;try{ii.setSelectionRange(n,n)}catch(e){}}};if(BATCH)selStyle(d,r);d.querySelector(".top").style.cursor="pointer";if(RADF&&(r[0]<RADF[0]||r[0]>RADF[1])){d.style.opacity=".5";d.style.borderStyle="dashed"}
   if(open===r[0]&&r[2]&&!BATCH){const e=document.createElement("div");e.className="ed";
    e.innerHTML='<input type="text" enterkeyhint="done">';
    const inp=e.querySelector("input");inp.value=r[1];let done=false;
-   const commit=()=>{if(done)return;done=true;const nv=inp.value.trim();if(open===r[0])open=-1;if(nv&&nv!==r[1]){r[1]=nv;r[4]=1;r[5]=1;save(false);pushNow()}else if(!r[4]){r[4]=1;save(false);pushNow()}setTimeout(render,200)};
+   const commit=()=>{if(done)return;done=true;const nv=inp.value.trim();if(open===r[0])open=-1;if(nv&&nv!==r[1]){r[1]=nv;r[4]=1;r[5]=1;save(false);pushNow()}else if(!r[4]){r[4]=1;save(false);pushNow()}setTimeout(()=>{if(open===-1)render()},200)};
    inp.onblur=commit;inp.onkeydown=ev=>{if(ev.key==="Enter")inp.blur();if(ev.key==="Escape"){inp.value=r[1];inp.blur()}};
    d.appendChild(e);setTimeout(()=>inp.focus(),0)}
   out.appendChild(d)});
