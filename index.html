@@ -74,13 +74,13 @@ function render(){const q=norm($("q").value),low=$("low").checked;let L;const ra
   if(w)d.querySelector(".m").classList.add("w");
   if($("img").checked){const cr=crop(r[0]);if(cr)d.appendChild(cr)}
   {const o=document.createElement("button");o.textContent="📖 開啟原文";o.className="ob";o.onclick=ev=>{ev.stopPropagation();openBook(+pdfPage(r[0]),r[0])};d.appendChild(o)}
-  if(w){const b=document.createElement("button");b.textContent="✓ 原文正確";b.onclick=ev=>{ev.stopPropagation();r[4]=1;save();render()};d.appendChild(b)}
   d.onclick=ev=>{if(ev.target.closest(".ed"))return;open=open===r[0]?-1:r[0];render()};
   if(open===r[0]&&r[2]){const e=document.createElement("div");e.className="ed";
-   e.innerHTML='<input type="text"><label><input type="checkbox"> 已校正</label><div><button class="s">儲存</button> <button class="o">原文正確</button> <button class="x">取消</button></div>';
-   e.querySelector("input").value=r[1];e.querySelector("input[type=checkbox]").checked=!!r[4];
-   e.querySelector(".s").onclick=()=>{const nv=e.querySelector("input").value.trim();if(nv&&nv!==r[1])r[5]=1;r[1]=nv||r[1];r[4]=e.querySelector("input[type=checkbox]").checked?1:0;save();open=-1;render()};
-   e.querySelector(".x").onclick=()=>{open=-1;render()};e.querySelector(".o").onclick=()=>{r[4]=1;save();open=-1;render()};d.appendChild(e)}
+   e.innerHTML='<input type="text" enterkeyhint="done">';
+   const inp=e.querySelector("input");inp.value=r[1];let done=false;
+   const commit=()=>{if(done)return;done=true;const nv=inp.value.trim();if(open===r[0])open=-1;if(nv&&nv!==r[1]){r[1]=nv;r[4]=1;r[5]=1;save(false);pushNow()}setTimeout(render,200)};
+   inp.onblur=commit;inp.onkeydown=ev=>{if(ev.key==="Enter")inp.blur();if(ev.key==="Escape"){inp.value=r[1];inp.blur()}};
+   d.appendChild(e);setTimeout(()=>inp.focus(),0)}
   out.appendChild(d)});
  $("more").hidden=L.length<=lim}
 $("q").oninput=()=>{lim=60;open=-1;render()};$("low").onchange=()=>{lim=60;render()};$("img").onchange=()=>render();
@@ -114,11 +114,11 @@ async function ghGet(){const x=await fetch(api()+ref(),{headers:hd(),cache:"no-s
 async function ghPush(){if(!cfg.o||!cfg.r||!cfg.t)return;try{msg("上傳中…");const cur=await ghGet();
  const body={message:"update corrections",branch:cfg.b||"main",content:btoa(unescape(encodeURIComponent(JSON.stringify({ts:+localStorage.getItem("idx_ts")||Date.now(),rows}))))};
  if(cur)body.sha=cur.sha;const x=await fetch(api(),{method:"PUT",headers:hd(),body:JSON.stringify(body)});
- if(!x.ok)throw new Error("GitHub 回應 "+x.status);msg("已同步到 GitHub（"+new Date().toLocaleTimeString()+"）")}catch(e){msg("同步失敗："+e.message+"。校正仍保存在本機。")}}
+ if(!x.ok)throw new Error("GitHub 回應 "+x.status);try{localStorage.setItem("idx_synced","1")}catch(e){}msg("已同步到 GitHub（"+new Date().toLocaleTimeString()+"）")}catch(e){msg("同步失敗："+e.message+"。校正仍保存在本機。")}}
 async function ghPull(force){if(!cfg.o||!cfg.r||!cfg.t)return;try{const cur=await ghGet();if(!cur){if(force)msg("GitHub 上還沒有資料。");else ghPush();return}
  const lt=+localStorage.getItem("idx_ts")||0,rt=cur.data.ts||0;
- if(force||rt>lt){rows=cur.data.rows;save(false);try{localStorage.setItem("idx_ts",String(rt))}catch(e){}lim=60;open=-1;render();msg("已從 GitHub 載入（"+rows.length+" 條）。")}
- else if(lt>rt)ghPush();else msg("與 GitHub 一致。")}catch(e){msg("讀取失敗："+e.message)}}
+ if(force||rt>lt||!localStorage.getItem("idx_synced")){rows=cur.data.rows;save(false);try{localStorage.setItem("idx_synced","1")}catch(e){}try{localStorage.setItem("idx_ts",String(rt))}catch(e){}lim=60;open=-1;render();msg("已從 GitHub 載入（"+rows.length+" 條）。")}
+ else if(lt>rt)ghPush();else{try{localStorage.setItem("idx_synced","1")}catch(e){}msg("與 GitHub 一致。")}}catch(e){msg("讀取失敗："+e.message)}}
 let tm=null;function schedPush(){if(!cfg.t)return;clearTimeout(tm);tm=setTimeout(ghPush,3000)}
 $("g_s").onclick=()=>{cfg={o:$("g_o").value.trim(),r:$("g_r").value.trim(),b:$("g_b").value.trim()||"main",t:$("g_t").value.trim()};try{localStorage.setItem("idx_gh",JSON.stringify(cfg))}catch(e){}ghPull(false)};
 $("g_u").onclick=ghPush;$("g_d").onclick=()=>ghPull(true);
@@ -128,6 +128,7 @@ $("s2t").onclick=()=>{let k=0;rows.forEach(r=>{if(r[4]||r[5])return;const t=Arra
 const REV={"裏": "里", "後": "后", "徵": "征", "臺": "台", "鬥": "斗", "託": "托", "雲": "云", "餘": "余", "衝": "冲", "採": "采"};
 const BMAP=new Map(BASE.map(r=>[r[0],r]));
 function ensureRev(){let n=0;rows.forEach(r=>{if(r[4]||r[5])return;const b=BMAP.get(r[0]);if(!b)return;const t=r[1],bt=b[1];if(t===bt||t.length!==bt.length)return;let o="";for(let i=0;i<t.length;i++){if(t[i]===bt[i])o+=t[i];else if(REV[t[i]]===bt[i])o+=bt[i];else{o=null;break}}if(o&&o!==t){r[1]=o;n++}});if(n){save();msg("已還原 "+n+" 條被誤轉的字（里、后、征、台、斗、托、云、余、冲、采）。")}}
+let pushing=false,pend=false;async function pushNow(){clearTimeout(tm);if(pushing){pend=true;return}pushing=true;try{await ghPush()}finally{pushing=false}if(pend){pend=false;pushNow()}}
 ghPull(false);
 render();
 try{if(!localStorage.getItem("idx_rev2"))setTimeout(()=>{ensureRev();localStorage.setItem("idx_rev2","1");render()},4000)}catch(e){}
