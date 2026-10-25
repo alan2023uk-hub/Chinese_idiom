@@ -29,7 +29,7 @@ button{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--line)
 </style></head><body><main>
 <h1>成語索引查找</h1>
 <input id="q" type="text" placeholder="首字、成語前幾字、編碼，或範圍如 1-20,30-100" autocomplete="off">
-<div class="bar"><button class="ob" id="pre" style="margin:0 8px 0 0">📖 前言／版權</button><label><input id="low" type="checkbox"> 只看低信心未校正</label><select id="sf"><option value="">疑似錯字：全部</option><option value="short">疑似缺字（未校正）</option><option value="other">其他疑似（未校正）</option></select><label><input id="img" type="checkbox" checked> 顯示原圖</label><span id="n"></span><button id="s2t">簡轉繁（未校正行）</button></div>
+<div class="bar"><button class="ob" id="pre" style="margin:0 8px 0 0">📖 前言／版權</button><button class="ob" id="pre2" style="margin:0 8px 0 0">📖 部首目錄</button><label><input id="low" type="checkbox"> 只看低信心未校正</label><select id="sf"><option value="">疑似錯字：全部</option><option value="short">疑似缺字（未校正）</option><option value="other">其他疑似（未校正）</option></select><label><input id="img" type="checkbox" checked> 顯示原圖</label><span id="n"></span><button id="s2t">簡轉繁（未校正行）</button></div>
 <div id="out"></div><button id="more" hidden>顯示更多</button>
 <div class="bar" style="margin-top:18px"><button id="exp">匯出 CSV</button><button id="imp">匯入 CSV</button><button id="rst">重設為原始</button><input id="file" type="file" accept=".csv,text/csv" hidden></div>
 <details class="m" style="margin-top:14px"><summary>匯入原文頁圖片到本機（只需做一次）</summary><div class="ed"><p style="margin:0 0 8px">解壓「原文頁圖片_b.zip」後，在此選取全部 515 張 jpg。圖片只存在這部裝置的瀏覽器內，不會上傳到 GitHub，每部裝置各自匯入一次。建議先用「加入主畫面」開啟本系統再匯入。</p><input id="bf" type="file" accept="image/jpeg" multiple><div id="bmsg" style="margin-top:8px"></div></div></details>
@@ -137,7 +137,7 @@ let BPOS=null;fetch("bpos.json").then(r=>r.ok?r.json():null).then(j=>{BPOS=j}).c
 let bpg=0,bcode=0;
 function openBook(pg,code){bpg=pg;bcode=code||0;$("bv").style.display="flex";showBook()}
 let bu=null,btk=0;
-async function showBook(){const tk=++btk;const m=MAP.find(x=>x[0]===bpg);$("bt").textContent=bpg<108?"前置頁 "+bpg+"/10":"第 "+bpg+" 頁"+(m?" · 編碼 "+m[1]+"–"+m[2]:"");const im=$("bm");im.onload=placeHL;$("bw").scrollTop=0;
+async function showBook(){const tk=++btk;const m=MAP.find(x=>x[0]===bpg);$("bt").textContent=bpg<=10?"前置頁 "+bpg+"/10":bpg<108?"部首索引目錄 "+(bpg-68)+"/2":"第 "+bpg+" 頁"+(m?" · 編碼 "+m[1]+"–"+m[2]:"");const im=$("bm");im.onload=placeHL;$("bw").scrollTop=0;
  let r=null;try{r=await idbGet(bpg)}catch(e){}
  if(tk!==btk)return;if(bu){URL.revokeObjectURL(bu);bu=null}
  if(r){bu=URL.createObjectURL(new Blob([r.b],{type:r.t}));im.src=bu}
@@ -145,8 +145,10 @@ async function showBook(){const tk=++btk;const m=MAP.find(x=>x[0]===bpg);$("bt")
   if(tk!==btk)return;im.removeAttribute("src");$("bt").textContent+=" · 找不到此頁圖片（本機未匯入，網站 b/ 也沒有）"}}
 function placeHL(){const o=document.querySelector("#bi .hl");if(o)o.remove();const p=BPOS&&bcode&&BPOS[bcode];if(!p||p[0]!==bpg)return;const h=document.createElement("div");h.className="hl";h.style.left=p[1]*100+"%";h.style.top=p[2]*100+"%";h.style.width=p[3]*100+"%";h.style.height=p[4]*100+"%";$("bi").appendChild(h);$("bw").scrollTop=Math.max(0,$("bm").clientHeight*p[2]-80)}
 $("pre").onclick=()=>openBook(1,0);
-$("bp").onclick=()=>{if(bpg>108||(bpg>1&&bpg<=10)){bpg--;bcode=0;showBook()}};
-$("bn").onclick=()=>{if((bpg<622&&bpg>=108)||bpg<10){bpg++;bcode=0;showBook()}};
+const RNG=[[1,10],[69,70],[108,622]];const rg=()=>RNG.find(x=>bpg>=x[0]&&bpg<=x[1])||[0,0];
+$("pre2").onclick=()=>openBook(69,0);
+$("bp").onclick=()=>{if(bpg>rg()[0]){bpg--;bcode=0;showBook()}};
+$("bn").onclick=()=>{if(bpg<rg()[1]){bpg++;bcode=0;showBook()}};
 $("bx").onclick=()=>{$("bv").style.display="none"};
 document.addEventListener("keydown",e=>{if($("bv").style.display!=="flex")return;if(e.key==="Escape")$("bx").click();if(e.key==="ArrowLeft")$("bp").click();if(e.key==="ArrowRight")$("bn").click()});
 
