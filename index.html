@@ -64,7 +64,7 @@ function render(){const q=norm($("q").value);let L;const raw=$("q").value.trim()
  L.slice(0,lim).forEach(r=>{const d=document.createElement("div");d.className="it";
   const w=r[3]<0.7&&!r[4];
   d.innerHTML='<div class="top"><span class="t"></span><span class="c">'+String(r[0]).padStart(4,"0")+'</span></div><div class="m"></div>';
-  d.querySelector(".t").textContent=r[1];
+  d.querySelector(".t").textContent=r[1];if(r[1]&&r[1].charAt(0)!=="（"){const sp=document.createElement("a");sp.textContent="🗣️";sp.href="https://shyyp.net/search?q="+encodeURIComponent(r[1]);sp.target="_blank";sp.rel="noopener";sp.title="聽粵語讀音";sp.style.cssText="text-decoration:none;margin-right:10px;padding:2px 6px";sp.onclick=ev=>ev.stopPropagation();d.querySelector(".c").prepend(sp)}
   d.querySelector(".m").textContent=(r[2]?"部首索引 "+r[2]+" · ":"")+"全本 PDF 第 "+pdfPage(r[0])+" 頁";
   const ob=ev=>{ev.stopPropagation();openBook(+pdfPage(r[0]),r[0])};d.querySelector(".m").onclick=ob;d.querySelector(".m").style.cursor="pointer";
   if($("img").checked){const cr=crop(r[0]);if(cr){cr.onclick=ob;cr.style.cursor="pointer";d.appendChild(cr)}}
